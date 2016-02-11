@@ -7,6 +7,12 @@
 //
 
 #import "AppDelegate.h"
+#import "AOAWineModel.h"
+#import "AOAWineryModel.h"
+#import "AOAWineViewController.h"
+#import "AOAWineryTableViewController.h"
+
+#import "AOAWebViewController.h"
 
 @interface AppDelegate ()
 
@@ -15,11 +21,33 @@
 @implementation AppDelegate
 
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+- (BOOL)            application:(UIApplication *)application
+  didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    
+    //Creamos los modelos
+    AOAWineryModel *winery = [[AOAWineryModel alloc] init];
+
+    //Creamos la table view
+    AOAWineryTableViewController *wineryVC = [[AOAWineryTableViewController alloc] initWithModel: winery
+                                                                                           style: UITableViewStylePlain];
+    AOAWineViewController *wineVC = [[AOAWineViewController alloc]initWithModel:[wineryVC lastSelectedWine]];
+    
+    //Cramos el navigation
+    UINavigationController * wineryNavVC = [[UINavigationController alloc] initWithRootViewController: wineryVC];
+    UINavigationController * wineNavVC = [[UINavigationController alloc] initWithRootViewController: wineVC];
+    
+    //El combinador split view
+    UISplitViewController * splitVC = [[UISplitViewController alloc] init];
+    splitVC.viewControllers = @[wineryNavVC, wineNavVC];
+    
+    //Asignar delegados
+    splitVC.delegate = wineVC;
+    wineryVC.delegate = wineVC;
     // Override point for customization after application launch.
-    self.window.backgroundColor = [UIColor whiteColor];
+    self.window.backgroundColor = [UIColor orangeColor];
     [self.window makeKeyAndVisible];
+    self.window.rootViewController = splitVC;
     return YES;
 }
 
