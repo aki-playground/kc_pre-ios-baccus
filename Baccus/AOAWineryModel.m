@@ -11,9 +11,9 @@
 
 @interface AOAWineryModel ()
 
-@property (strong, nonatomic) NSArray *redWines;
-@property (strong, nonatomic) NSArray *whiteWines;
-@property (strong, nonatomic) NSArray *otherWines;
+@property (strong, nonatomic) NSMutableArray *redWines;
+@property (strong, nonatomic) NSMutableArray *whiteWines;
+@property (strong, nonatomic) NSMutableArray *otherWines;
 
 @end
 
@@ -33,40 +33,53 @@
     return self.otherWines.count;
 }
 
--(id) init {
+-(id) init
+{
     if (self = [super init]){
-        AOAWineModel * vegaSicilia = [AOAWineModel wineWithName: @"VegaSicilia 2007"
-                                                wineCompanyName: @"VegaSicilia"
-                                                           type: @"Tinto"
-                                                         origin: @"Ribera"
-                                                         grapes: @[@"Garnacha"]
-                                                 wineCompanyWeb: [NSURL URLWithString:@"http://www.vega-sicilia.com"]
-                                                          notes: @"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin id metus aliquet, facilisis tellus id, blandit sem. Sed suscipit arcu id mi sodales lobortis nec at tellus. Vivamus mollis pretium semper. Sed in pretium tellus, vitae imperdiet purus. Sed libero nisi, tincidunt nec lorem ac, ornare feugiat metus. Curabitur ante urna, facilisis non lacus id, condimentum dapibus nulla. Suspendisse a metus vulputate urna varius ultricies eget sed turpis. Praesent tortor tellus, tincidunt a turpis vitae, consectetur dignissim metus. Nunc blandit, libero ut efficitur sagittis, velit massa efficitur tellus, et efficitur purus arcu at odio. Proin vitae condimentum urna. Nam sollicitudin ultrices est at ornare. Praesent ut mauris nec risus vehicula dictum vitae ac felis. Donec nec luctus tellus. Proin congue enim ex. Aenean vulputate ipsum at mauris sollicitudin, vitae condimentum purus accumsan.Aenean facilisis nibh ac lorem pellentesque luctus. Praesent id ultricies tellus, eu placerat arcu. Duis vulputate leo sem, vel imperdiet purus tincidunt eu. Nulla facilisis vestibulum tortor, ac volutpat erat vestibulum non. Integer id diam nec nisl sagittis sollicitudin at ac augue. Nulla sit amet volutpat orci, in convallis elit. Vivamus ac blandit tellus. Curabitur vel auctor arcu, vitae aliquam eros. Vestibulum at congue lacus. Mauris posuere vitae est id placerat. Quisque sed ligula massa. Suspendisse potenti."
-                                                         rating: 5
-                                                          photo:[UIImage imageNamed:@"solaguen.png"]];
-        AOAWineModel * pagoCarraovejas = [AOAWineModel wineWithName: @"Pago de Carraovejas Crianza 2013"
-                                                    wineCompanyName: @"Pago Carraovejas"
-                                                               type: @"Tinto"
-                                                             origin: @"Ribera"
-                                                             grapes: @[@"Tinto Fino", @"Sauvignon", @"Merlot"]
-                                                     wineCompanyWeb: [NSURL URLWithString:@"http://www.pagodecarraovejas.com/"]
-                                                              notes: @"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin id metus aliquet, facilisis tellus id, blandit sem. Sed suscipit arcu id mi sodales lobortis nec at tellus. Vivamus mollis pretium semper. Sed in pretium tellus, vitae imperdiet purus."
-                                                             rating: 5
-                                                              photo:[UIImage imageNamed:@"carraovejas.jpg"]];
-        AOAWineModel * solaguen = [AOAWineModel wineWithName: @"Solaguen Reserva"
-                                             wineCompanyName: @"Solaguen"
-                                                        type: @"Tinto"
-                                                      origin: @"Rioja"
-                                                      grapes: @[@"Tempranillo"]
-                                              wineCompanyWeb: [NSURL URLWithString:@"http://www.solaguen.com"]
-                                                       notes: @"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin id metus aliquet, facilisis tellus id, blandit sem."
-                                                      rating: 5
-                                                       photo:[UIImage imageNamed:@"vegasici.jpg"]];
         
-        self.redWines = @[vegaSicilia];
-        self.whiteWines = @[pagoCarraovejas];
-        self.otherWines = @[solaguen];
+        //Cargar fichero de Cache
+        NSData *data = [self loadDataFromFile];
+        if (data == nil) {
+            data = [self loadDataFromInet];
+        }
+        
+        
+        if (data != nil) {
+            NSError * error;
+            NSArray *JSONObjects = [NSJSONSerialization JSONObjectWithData:data
+                                                                  options:kNilOptions
+                                                                    error:&error];
+            
+            if (JSONObjects != nil){
 
+                for(NSDictionary *dict in JSONObjects){
+                    AOAWineModel *wine = [[AOAWineModel alloc]initWithDictionary:dict];
+                    if([wine.type isEqualToString:RED_WINE_KEY]){
+                        if(!self.redWines){
+                            self.redWines = [NSMutableArray arrayWithObject:wine];
+                        } else {
+                            [self.redWines addObject: wine];
+                            
+                        }
+                    } else if ([wine.type isEqualToString:WHITE_WINE_KEY]){
+                        if(!self.whiteWines){
+                            self.whiteWines = [NSMutableArray arrayWithObject:wine];
+                        } else {
+                            [self.whiteWines addObject: wine];
+                        }
+                    } else {
+                        if(!self.otherWines){
+                            self.otherWines = [NSMutableArray arrayWithObject:wine];
+                        } else {
+                            [self.otherWines addObject: wine];
+                        }
+                        
+                    }
+                }
+            } else {
+                NSLog(@"Error al cargar JSON: %@", error.localizedDescription);
+            }
+        }
     }
     return self;
 }
@@ -83,5 +96,55 @@
     return [self.otherWines objectAtIndex: index];
 }
 
+
+#pragma mark - Util
+
+
+-(NSData *) loadDataFromFile
+{
+    //ruta a fichero text.txt en carpeta cache de sandbox
+    NSFileManager *fm = [NSFileManager defaultManager];
+    
+    NSURL *url = [[fm URLsForDirectory:NSCachesDirectory
+                             inDomains:NSUserDomainMask] lastObject];
+    
+    url = [url URLByAppendingPathComponent:@"wines.json"];
+    
+    NSData *data =[NSData dataWithContentsOfURL: url];
+
+    return data;
+}
+
+
+
+-(NSData *) loadDataFromInet
+{
+    NSURLRequest * request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://golang.bz/baccus/wines.json"]];
+    
+    NSURLResponse * response = [[NSURLResponse alloc] init];
+    
+    NSError * error;
+    
+    NSData * data = [NSURLConnection sendSynchronousRequest : request
+                                          returningResponse : &response
+                                                       error: &error];
+    
+    if (data != nil){
+        
+        //ruta a fichero text.txt en carpeta cache de sandbox
+        NSFileManager *fm = [NSFileManager defaultManager];
+        
+        NSURL *url = [[fm URLsForDirectory:NSCachesDirectory
+                                 inDomains:NSUserDomainMask] lastObject];
+        
+        url = [url URLByAppendingPathComponent:@"wines.json"];
+        
+        BOOL rc = NO;
+        
+        rc = [data writeToURL:url
+                   atomically:YES];
+    }
+    return data;
+}
 
 @end

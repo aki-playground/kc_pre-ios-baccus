@@ -9,6 +9,10 @@
 #import <Foundation/Foundation.h>
 #import "AOAWineModel.h"
 
+#define RED_WINE_KEY @"Tinto"
+#define WHITE_WINE_KEY @"Blanco"
+
+
 @interface AOAWineryModel : NSObject
 
 

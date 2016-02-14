@@ -19,10 +19,11 @@
 @property (strong, nonatomic) NSString *type;
 @property (strong, nonatomic) NSString *origin;
 @property (strong, nonatomic) NSArray *grapes;
+@property (strong, nonatomic) NSURL *photoURL;
 @property (strong, nonatomic) NSURL *wineCompanyWeb;
 @property (strong, nonatomic) NSString *notes;
 @property (nonatomic) int rating; //0-5
-@property (strong, nonatomic) UIImage *photo;
+@property (strong, nonatomic, readonly) UIImage *photo;
 
 
 +(id) wineWithName: (NSString *) aName
@@ -33,7 +34,7 @@
     wineCompanyWeb: (NSURL *) aURL
              notes: (NSString *) aNotes
             rating: (int) aRating
-             photo: (UIImage *) aPhoto;
+          photoURL: (NSURL *) aPhotoURL;
 
 +(id) wineWithName: (NSString *) aName
    wineCompanyName: (NSString *) aWineCompanyName
@@ -49,11 +50,13 @@
     wineCompanyWeb: (NSURL *) aURL
              notes: (NSString *) aNotes
             rating: (int) aRating
-             photo: (UIImage *) aPhoto;
+          photoURL: (NSURL *) aPhotoURL;
 
 -(id) initWithName: (NSString *) aName
    wineCompanyName: (NSString *) aWineCompanyName
               type: (NSString *) aType
             origin: (NSString *) anOrigin;
 
+
+-(id) initWithDictionary: (NSDictionary *) aDictionary;
 @end
